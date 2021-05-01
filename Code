@@ -1,0 +1,168 @@
+import requests
+
+
+
+def maps(start,destination):                                #https://www.youtube.com/watch?v=yOXQAmYl0Aw&list=PL9PKTtrudOHZTFdodlKzWvJqJBqg77tWF&index=2
+    key="Enter your Google API-Key"
+    url="https://maps.googleapis.com/maps/api/distancematrix/json?"
+    r=requests.get(url+"origins="+start+"&destinations="+destination+"&key="+key)
+    time=r.json()["rows"][0]["elements"][0]["duration"]["text"]
+    return time
+
+def distance(start,destination):                                #https://www.youtube.com/watch?v=yOXQAmYl0Aw&list=PL9PKTtrudOHZTFdodlKzWvJqJBqg77tWF&index=2
+    key="Enter your Google API-Key"
+    url="https://maps.googleapis.com/maps/api/distancematrix/json?"
+    r=requests.get(url+"origins="+start+"&destinations="+destination+"&key="+key)
+    dist=r.json()["rows"][0]["elements"][0]["distance"]["value"]
+    return dist
+
+
+
+def destinations():
+    curr=input("Enter your starting location:")
+    route=[]
+    destinations=[]
+    move=True
+    count=0
+    while move:                                                             #collect route data from user
+        dest=input("Enter destinations "'\n' "Enter 'X' when done:")
+        if dest=="X" and count!=0:
+            move=False
+        else:
+            if dest!="X":
+                destinations.append(dest)
+                count+=1
+
+    total=0
+    shortest = 0
+    dest1=destinations[0]
+    first = maps(curr, destinations[0]).split()
+    if len(first) == 4:                                 #get time of starting point to first destination to compare to others
+        shortest += int(first[0]) * 60
+        shortest += int(first[2])
+    else:
+        shortest += int(first[0])
+
+    for el in destinations:                             # get nearest destination from starting point
+        data= maps(curr,el).split()
+        if len(data)==4:
+            if (int(data[0])*60 + int(data[2]))<shortest:
+                shortest=(int(data[0])*60 + int(data[2]))
+                dest1=el
+        else:
+            if int(data[0])<shortest:
+                shortest=int(data[0])
+                dest1=el
+
+    route.append(dest1)
+    total+=shortest
+    destinations.remove(dest1)
+    location=dest1
+    while destinations!=[]:                             # get nearest point of every destination remaining in destinations list
+        quickest=0
+        dest=""
+        data=maps(location,destinations[0]).split()
+        if len(data)==4:
+            quickest=(int(data[0])*60 + int(data[2]))
+            dest=destinations[0]
+        else:
+            quickest=int(data[0])
+            dest=destinations[0]
+        for el in destinations[1:]:
+            data=maps(location,el).split()
+            if len(data) == 4:
+                if (int(data[0]) * 60 + int(data[2])) < quickest:
+                    quickest = (int(data[0]) * 60 + int(data[2]))
+                    dest = el
+            else:
+                if int(data[0]) < quickest:
+                    quickest = int(data[0])
+                    dest = el
+        total+=quickest
+        route.append(dest)
+        destinations.remove(dest)
+        location=dest
+
+    out=curr
+    for el in route:                        # Create User output for route
+        out+="-->"
+        out+=el
+    out+="'\n' Duration: "
+    if total>59:
+        out+=str(total//60)+" Hours "
+        out+=str(total%60)+" Minutes"
+    else:
+        out+=str(total)+" Minutes"
+    print (out)
+
+    move3 = False
+    move2=False
+    while not move2:                        #ask for additional information
+        cont=input("Continue(C) or End(X)?:")
+        if cont=="X":
+            move2=True
+            move3=True
+        elif cont=="C":
+            move2=True
+
+
+    while not move3:            #print information for time to return home and distance
+        add=input("Get time to return home(H)? Get Total Distance(D):")
+        if add=="H":
+            print(route[-1]+"-->"+curr)
+            print("Duration: "+maps(route[-1],curr))
+            next=input("Get Total Distance(D)? End(X)?")
+            if next=="X":
+                move3=True
+            elif next=="D":
+                total=0
+                total+=int(distance(curr,route[0]))
+                if len(route)>1:
+                    for i in range(len(route)-1):
+                        total+=int(distance(route[i],route[i+1]))
+                km=0
+                m=0
+                if total>999:
+                    km+=total//1000
+                    m+=total%1000
+                else:
+                    m+=total
+                print("Distance="+str(km)+"."+str(m)+"km")
+                move3=True
+
+        elif add=="D":
+            total = 0
+            total += int(distance(curr, route[0]))
+            if len(route) > 1:
+                for i in range(len(route) - 1):
+                    total += int(distance(route[i], route[i + 1]))
+            km = 0
+            m =0
+            if total > 999:
+                km += total // 1000
+                m += total % 1000
+            else:
+                m += total
+            print("Distance=" + str(km) + "." + str(m) + "km")
+            next=input("Get time to return home(H)? End(X)?:")
+            if next=="H":
+                print(route[-1] + "-->" + curr)
+                print("Duration: " + maps(route[-1], curr))
+                move3=True
+            elif next=="X":
+                move3=True
+
+
+    return None
+
+
+
+
+
+
+
+
+
+
+
+print(destinations())
